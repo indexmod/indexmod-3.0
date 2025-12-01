@@ -1,6 +1,6 @@
 # wrangler.toml — конфигурация воркера
 
-name = "steep-block-worker"       # имя воркера, подставляется в URL
+name = "indexmod-worker"       # имя воркера, подставляется в URL
 type = "javascript"               # тип скрипта
 compatibility_date = "2025-12-01" # дата совместимости
 
