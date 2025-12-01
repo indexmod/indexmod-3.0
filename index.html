@@ -2,13 +2,27 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Indexmod Fashion & Art 2026
-</title>
+  <title>Indexmod Fashion & Art 2026</title>
+
+  <!-- Фавикон -->
+  <link rel="icon" type="image/png" href="logo.png">
+
+  <!-- Стили -->
   <link rel="stylesheet" href="styles.css">
+
+  <!-- Подключение html2pdf для сохранения PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1>Список топиков</h1>
+
+    <!-- Верхняя панель с логотипом и заголовком -->
+    <header style="display: flex; align-items: center; margin-bottom: 20px;">
+      <img src="logo.png" alt="Logo" style="height: 60px; width: auto; margin-right: 20px;">
+      <h1>Список топиков</h1>
+    </header>
+
+    <!-- Контейнер для топиков -->
     <div id="topics" class="columns-container"></div>
   </div>
 
@@ -22,6 +36,7 @@
     </div>
   </div>
 
+  <!-- Скрипт -->
   <script>
     async function loadTopics() {
       const response = await fetch("topics.txt");
@@ -30,13 +45,15 @@
       topics.sort((a,b) => a.localeCompare(b));
 
       const container = document.getElementById("topics");
-
       let currentLetter = "";
+
+      // Создаем три колонки
       let columns = [document.createElement("div"), document.createElement("div"), document.createElement("div")];
       columns.forEach(c => c.className = "column");
 
       topics.forEach((topic, i) => {
         const first = topic[0].toUpperCase();
+        // Если первая буква отличается, добавляем буквицы в соответствующую колонку
         if (first !== currentLetter) {
           currentLetter = first;
           const h = document.createElement("h2");
@@ -87,7 +104,12 @@
     }
 
     function savePDF() {
-      window.print();
+      const element = document.getElementById("article");
+      if (window.html2pdf) {
+        html2pdf().from(element).save();
+      } else {
+        window.print();
+      }
     }
 
     document.getElementById("close-modal").onclick = () => {
