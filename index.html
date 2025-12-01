@@ -2,22 +2,78 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Topics</title>
-  <script defer src="script.js"></script>
+  <title>Топики</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
-    .topic { cursor: pointer; margin: 8px 0; color: blue; }
-    .topic:hover { text-decoration: underline; }
+    .topic { cursor: pointer; margin: 5px 0; }
+    .alphabet { font-weight: bold; margin-top: 20px; }
+    #modal { display: none; position: fixed; top: 10%; left: 10%; width: 80%; height: 80%; background: #fff; border: 2px solid #000; overflow: auto; padding: 20px; z-index: 1000; }
+    #modalClose { position: absolute; top: 10px; right: 20px; cursor: pointer; font-weight: bold; }
   </style>
 </head>
 <body>
+  <h1>Топики</h1>
+  <div id="topics"></div>
 
-<h1>Список статей</h1>
-<div id="topics"></div>
+  <div id="modal">
+    <span id="modalClose">[X]</span>
+    <div id="modalContent"></div>
+    <button id="downloadPdf">Скачать PDF</button>
+  </div>
 
-<hr>
+  <script>
+    async function fetchTopics() {
+      const res = await fetch('topics.txt');
+      const text = await res.text();
+      let topics = text.split('\n').map(t => t.trim()).filter(Boolean);
+      topics.sort((a,b) => a.localeCompare(b, 'ru'));
+      return topics;
+    }
 
-<div id="article"></div>
+    function renderTopics(topics) {
+      const container = document.getElementById('topics');
+      let currentLetter = '';
+      topics.forEach(topic => {
+        let letter = topic[0].toUpperCase();
+        if (letter !== currentLetter) {
+          currentLetter = letter;
+          const letterDiv = document.createElement('div');
+          letterDiv.className = 'alphabet';
+          letterDiv.textContent = currentLetter;
+          container.appendChild(letterDiv);
+        }
+        const div = document.createElement('div');
+        div.className = 'topic';
+        div.textContent = topic;
+        div.onclick = () => generateArticle(topic);
+        container.appendChild(div);
+      });
+    }
 
+    async function generateArticle(topic) {
+      // Пример генерации — здесь можно подключить реальный LLM через API
+      const article = `<h2>${topic}</h2><p>Это сгенерированная статья про ${topic}.</p>`;
+      const modal = document.getElementById('modal');
+      document.getElementById('modalContent').innerHTML = article;
+      modal.style.display = 'block';
+    }
+
+    document.getElementById('modalClose').onclick = () => {
+      document.getElementById('modal').style.display = 'none';
+    };
+
+    document.getElementById('downloadPdf').onclick = () => {
+      const modalContent = document.getElementById('modalContent');
+      const blob = new Blob([modalContent.innerHTML], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'article.pdf';
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    fetchTopics().then(renderTopics);
+  </script>
 </body>
 </html>

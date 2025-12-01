@@ -1,89 +1,66 @@
 async function loadTopics() {
-  const txt = await fetch("topics.txt").then(r => r.text());
-  return txt.split("\n")
-            .map(t => t.trim())
-            .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b));
-}
+    const response = await fetch("topics.txt");
+    const text = await response.text();
 
-async function renderTopics() {
-  const topics = await loadTopics();
-  const container = document.getElementById("topics");
+    let topics = text.split("\n").map(t => t.trim()).filter(t => t.length > 0);
+    topics.sort((a, b) => a.localeCompare(b));
 
-  container.innerHTML = topics
-    .map(t => `<div class="topic" onclick="generateArticle('${t}')">${t}</div>`)
-    .join("");
+    const container = document.getElementById("topics");
+
+    let currentLetter = "";
+
+    topics.forEach(topic => {
+        const first = topic[0].toUpperCase();
+        if (first !== currentLetter) {
+            currentLetter = first;
+            const h = document.createElement("h2");
+            h.textContent = currentLetter;
+            container.appendChild(h);
+        }
+
+        const div = document.createElement("div");
+        div.className = "topic";
+        div.textContent = topic;
+        div.onclick = () => openArticle(topic);
+        container.appendChild(div);
+    });
 }
 
 async function generateArticle(topic) {
-  const articleEl = document.getElementById("article");
-  articleEl.innerHTML = `<p>Генерирую статью...</p>`;
+    // 🔥 Здесь ты подключишь свою LLM
+    // Сейчас — простая заглушка
+    return `
+# ${topic}
 
-  const prompt = `
-Создай короткую структурированную статью о теме: "${topic}"
-Формат:
-# Заголовок
-## Введение
-## Основные факты
-## Вывод
+Эта статья создана автоматически.
+Здесь будет содержаться развернутая декларация и экспликация темы **${topic}**.
 `;
-
-  // ★ Вызов LLM
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4.1-mini",
-    messages: [
-      { role: "system", content: "Ты создаешь простые структурированные статьи." },
-      { role: "user", content: prompt }
-    ]
-  });
-
-  const article = completion.choices[0].message.content;
-
-  // Рендер HTML
-  articleEl.innerHTML = `
-    <h2>${topic}</h2>
-    <pre style="white-space: pre-wrap;">${article}</pre>
-
-    <button onclick="downloadMD('${topic}', \`${article}\`)">⬇️ Скачать .md</button>
-    <button onclick="downloadPDF('${topic}', \`${article}\`)">📄 PDF</button>
-    <button onclick="uploadToGitHub('${topic}', \`${article}\`)">⬆️ Commit в GitHub</button>
-  `;
 }
 
-function downloadMD(topic, text) {
-  const blob = new Blob([text], { type: "text/markdown" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = topic + ".md";
-  a.click();
+function openArticle(topic) {
+    generateArticle(topic).then(article => {
+        document.getElementById("article").innerHTML =
+            `<h2>${topic}</h2><pre>${article}</pre>`;
+        document.getElementById("modal").style.display = "flex";
+
+        document.getElementById("save-md").onclick = () => saveMD(topic, article);
+        document.getElementById("save-pdf").onclick = () => savePDF();
+    });
 }
 
-async function downloadPDF(topic, text) {
-  const blob = new Blob([text], { type: "application/pdf" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = topic + ".pdf";
-  a.click();
+function saveMD(topic, text) {
+    const blob = new Blob([text], { type: "text/markdown" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${topic}.md`;
+    a.click();
 }
 
-async function uploadToGitHub(topic, text) {
-  const fileName = topic.replace(/\s+/g, "-").toLowerCase() + ".md";
-
-  const token = prompt("Введи GitHub токен (будет использован один раз):");
-
-  const response = await fetch(`https://api.github.com/repos/indexmod/indexmod-3/contents/articles/${fileName}`, {
-    method: "PUT",
-    headers: {
-      "Authorization": "token " + token,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      message: `Add article ${fileName}`,
-      content: btoa(unescape(encodeURIComponent(text)))
-    })
-  });
-
-  alert("Отправлено!");
+function savePDF() {
+    window.print();
 }
 
-renderTopics();
+document.getElementById("close-modal").onclick = () =>
+    document.getElementById("modal").style.display = "none";
+
+loadTopics();
