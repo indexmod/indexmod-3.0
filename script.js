@@ -1,5 +1,3 @@
-// script.js
-
 // Загружаем топики из текстового файла
 async function loadTopics() {
     const response = await fetch("topics.txt");
@@ -11,7 +9,25 @@ async function loadTopics() {
     topics.sort((a, b) => a.localeCompare(b));
 
     const container = document.getElementById("topics");
+    container.innerHTML = ""; // Очистка перед рендером
+
+    // Создаём контейнер колонок
+    const columnsContainer = document.createElement("div");
+    columnsContainer.className = "columns-container";
+    container.appendChild(columnsContainer);
+
+    // Создаём три колонки
+    const colCount = 3;
+    const columns = [];
+    for (let i = 0; i < colCount; i++) {
+        const col = document.createElement("div");
+        col.className = "column";
+        columnsContainer.appendChild(col);
+        columns.push(col);
+    }
+
     let currentLetter = "";
+    let colIndex = 0;
 
     topics.forEach(topic => {
         const first = topic[0].toUpperCase();
@@ -19,14 +35,15 @@ async function loadTopics() {
             currentLetter = first;
             const h = document.createElement("h2");
             h.textContent = currentLetter;
-            container.appendChild(h);
+            columns[colIndex % colCount].appendChild(h);
+            colIndex++;
         }
 
         const div = document.createElement("div");
         div.className = "topic";
         div.textContent = topic;
         div.onclick = () => openArticle(topic);
-        container.appendChild(div);
+        columns[colIndex % colCount].appendChild(div);
     });
 }
 
@@ -35,19 +52,14 @@ async function generateArticle(topic) {
     try {
         const response = await fetch("https://steep-block-7d70.indexmod-ce3.workers.dev/", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ topic })
         });
 
         const data = await response.json();
 
-        if (data.article) {
-            return data.article;
-        } else {
-            return `Ошибка генерации статьи для темы "${topic}"`;
-        }
+        if (data.article) return data.article;
+        else return `Ошибка генерации статьи для темы "${topic}"`;
     } catch (err) {
         return `Ошибка запроса: ${err.message}`;
     }
