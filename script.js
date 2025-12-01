@@ -1,4 +1,6 @@
-// Загружаем топики из текстового файла
+// script.js
+
+// ▶ Загрузка топиков из текстового файла
 async function loadTopics() {
     const response = await fetch("topics.txt");
     const text = await response.text();
@@ -11,12 +13,10 @@ async function loadTopics() {
     const container = document.getElementById("topics");
     container.innerHTML = ""; // Очистка перед рендером
 
-    // Создаём контейнер колонок
     const columnsContainer = document.createElement("div");
     columnsContainer.className = "columns-container";
     container.appendChild(columnsContainer);
 
-    // Создаём три колонки
     const colCount = 3;
     const columns = [];
     for (let i = 0; i < colCount; i++) {
@@ -47,10 +47,13 @@ async function loadTopics() {
     });
 }
 
-// Генерация статьи через Cloudflare Worker
+// ▶ Генерация статьи через Cloudflare Worker
 async function generateArticle(topic) {
     try {
-        const response = await fetch("https://steep-block-7d70.indexmod-ce3.workers.dev/", {
+        // <-- Указываем URL твоего Worker -->
+        const workerURL = "https://steep-block-7d70.indexmod-ce3.workers.dev/";
+
+        const response = await fetch(workerURL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ topic })
@@ -58,21 +61,27 @@ async function generateArticle(topic) {
 
         const data = await response.json();
 
+        if (!data) return "Пустой ответ от модели.";
+        if (data.error) return "Ошибка модели: " + data.error;
+
+        // Cloudflare Worker возвращает поле article
         if (data.article) return data.article;
-        else return `Ошибка генерации статьи для темы "${topic}"`;
+
+        return JSON.stringify(data, null, 2);
     } catch (err) {
         return `Ошибка запроса: ${err.message}`;
     }
 }
 
-// Открываем модалку с текстом статьи
+// ▶ Открытие статьи в модальном окне
 function openArticle(topic) {
     generateArticle(topic).then(article => {
         const articleContainer = document.getElementById("article");
         articleContainer.innerHTML = `
             <h2>${topic}</h2>
-            <pre>${article}</pre>
+            <div class="article-body">${article}</div>
         `;
+
         document.getElementById("modal").style.display = "flex";
 
         document.getElementById("save-md").onclick = () => saveMD(topic, article);
@@ -80,7 +89,7 @@ function openArticle(topic) {
     });
 }
 
-// Сохраняем статью как Markdown
+// ▶ Сохранение статьи в Markdown
 function saveMD(topic, text) {
     const blob = new Blob([text], { type: "text/markdown" });
     const a = document.createElement("a");
@@ -89,7 +98,7 @@ function saveMD(topic, text) {
     a.click();
 }
 
-// Сохраняем статью как PDF
+// ▶ Сохранение статьи как PDF
 function savePDF() {
     const element = document.getElementById("article");
     if (window.html2pdf) {
@@ -99,10 +108,10 @@ function savePDF() {
     }
 }
 
-// Закрываем модалку
+// ▶ Закрытие модалки
 document.getElementById("close-modal").onclick = () => {
     document.getElementById("modal").style.display = "none";
 };
 
-// Запуск
+// ▶ Запуск загрузки топиков
 loadTopics();
