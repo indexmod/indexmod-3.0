@@ -1,12 +1,16 @@
+// script.js
+
+// Загружаем топики из текстового файла
 async function loadTopics() {
     const response = await fetch("topics.txt");
     const text = await response.text();
 
-    let topics = text.split("\n").map(t => t.trim()).filter(t => t.length > 0);
+    let topics = text.split("\n")
+                     .map(t => t.trim())
+                     .filter(t => t.length > 0);
     topics.sort((a, b) => a.localeCompare(b));
 
     const container = document.getElementById("topics");
-
     let currentLetter = "";
 
     topics.forEach(topic => {
@@ -26,21 +30,37 @@ async function loadTopics() {
     });
 }
 
+// Генерация статьи через Cloudflare Worker
 async function generateArticle(topic) {
-    // 🔥 Здесь ты подключишь свою LLM
-    // Сейчас — простая заглушка
-    return `
-# ${topic}
+    try {
+        const response = await fetch("https://steep-block-7d70.indexmod-ce3.workers.dev/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ topic })
+        });
 
-Эта статья создана автоматически.
-Здесь будет содержаться развернутая декларация и экспликация темы **${topic}**.
-`;
+        const data = await response.json();
+
+        if (data.article) {
+            return data.article;
+        } else {
+            return `Ошибка генерации статьи для темы "${topic}"`;
+        }
+    } catch (err) {
+        return `Ошибка запроса: ${err.message}`;
+    }
 }
 
+// Открываем модалку с текстом статьи
 function openArticle(topic) {
     generateArticle(topic).then(article => {
-        document.getElementById("article").innerHTML =
-            `<h2>${topic}</h2><pre>${article}</pre>`;
+        const articleContainer = document.getElementById("article");
+        articleContainer.innerHTML = `
+            <h2>${topic}</h2>
+            <pre>${article}</pre>
+        `;
         document.getElementById("modal").style.display = "flex";
 
         document.getElementById("save-md").onclick = () => saveMD(topic, article);
@@ -48,6 +68,7 @@ function openArticle(topic) {
     });
 }
 
+// Сохраняем статью как Markdown
 function saveMD(topic, text) {
     const blob = new Blob([text], { type: "text/markdown" });
     const a = document.createElement("a");
@@ -56,11 +77,20 @@ function saveMD(topic, text) {
     a.click();
 }
 
+// Сохраняем статью как PDF
 function savePDF() {
-    window.print();
+    const element = document.getElementById("article");
+    if (window.html2pdf) {
+        html2pdf().from(element).save();
+    } else {
+        alert("html2pdf.js не подключен!");
+    }
 }
 
-document.getElementById("close-modal").onclick = () =>
+// Закрываем модалку
+document.getElementById("close-modal").onclick = () => {
     document.getElementById("modal").style.display = "none";
+};
 
+// Запуск
 loadTopics();

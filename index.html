@@ -1,108 +1,159 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>Генератор статей</title>
-<style>
-  body { font-family: Arial, sans-serif; padding: 20px; }
-  ul { list-style: none; padding: 0; }
-  li { margin: 5px 0; cursor: pointer; color: blue; }
-  li:hover { text-decoration: underline; }
-  #modal {
-    display: none;
-    position: fixed; top:0; left:0; width:100%; height:100%;
-    background: rgba(0,0,0,0.6); justify-content:center; align-items:center;
-  }
-  #modalContent {
-    background: white; padding: 20px; max-width: 800px; max-height: 80%;
-    overflow: auto; border-radius: 8px; position: relative;
-  }
-  #close { position: absolute; top:10px; right:10px; cursor:pointer; }
-  button { margin-top: 10px; }
-</style>
+    <meta charset="UTF-8">
+    <title>Indexmod Topics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h2 {
+            margin-top: 40px;
+            grid-column: 1 / -1;
+            font-size: 1.5em;
+            border-bottom: 2px solid #333;
+            padding-bottom: 5px;
+        }
+        #topics {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px 20px;
+        }
+        .topic {
+            cursor: pointer;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+        .topic:hover {
+            background-color: #f0f0f0;
+        }
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #modal-content {
+            background: #fff;
+            padding: 20px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow: auto;
+            position: relative;
+        }
+        #close-modal {
+            position: absolute;
+            top: 10px; right: 10px;
+        }
+        button {
+            margin: 5px;
+        }
+    </style>
 </head>
 <body>
+    <h1>Список топиков</h1>
+    <div id="topics"></div>
 
-<h1>Список топиков</h1>
-<ul id="topics"></ul>
+    <!-- Модалка для статьи -->
+    <div id="modal">
+        <div id="modal-content">
+            <button id="close-modal">Закрыть</button>
+            <div id="article"></div>
+            <button id="save-md">Скачать MD</button>
+            <button id="save-pdf">Скачать PDF</button>
+        </div>
+    </div>
 
-<div id="modal">
-  <div id="modalContent">
-    <span id="close">✖</span>
-    <div id="article"></div>
-    <button id="downloadMd">Скачать Markdown</button>
-    <button id="downloadPdf">Скачать PDF</button>
-  </div>
-</div>
+    <script>
+    async function loadTopics() {
+        const response = await fetch("topics.txt");
+        const text = await response.text();
 
-<script>
-const workerUrl = "https://steep-block-7d70.indexmod-ce3.workers.dev/";
+        let topics = text.split("\n")
+                         .map(t => t.trim())
+                         .filter(t => t.length > 0);
+        topics.sort((a, b) => a.localeCompare(b));
 
-// Загружаем топики из файла
-fetch('topics.txt')
-  .then(res => res.text())
-  .then(text => {
-    const topics = text.split('\n').map(t => t.trim()).filter(Boolean);
-    topics.sort((a,b) => a.localeCompare(b));
-    const ul = document.getElementById('topics');
-    topics.forEach(topic => {
-      const li = document.createElement('li');
-      li.textContent = topic;
-      li.onclick = () => generateArticle(topic);
-      ul.appendChild(li);
-    });
-  });
+        const container = document.getElementById("topics");
+        let currentLetter = "";
 
-// Генерация статьи через Worker
-function generateArticle(topic) {
-  fetch(workerUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ topic })
-  })
-  .then(res => res.json())
-  .then(data => showModal(topic, data.article))
-  .catch(err => alert('Ошибка генерации: ' + err));
-}
+        topics.forEach(topic => {
+            const first = topic[0].toUpperCase();
+            if (first !== currentLetter) {
+                currentLetter = first;
+                const h = document.createElement("h2");
+                h.textContent = currentLetter;
+                container.appendChild(h);
+            }
 
-// Модальное окно
-const modal = document.getElementById('modal');
-const articleDiv = document.getElementById('article');
-document.getElementById('close').onclick = () => modal.style.display = 'none';
+            const div = document.createElement("div");
+            div.className = "topic";
+            div.textContent = topic;
+            div.onclick = () => openArticle(topic);
+            container.appendChild(div);
+        });
+    }
 
-function showModal(topic, content) {
-  articleDiv.textContent = content;
-  modal.style.display = 'flex';
+    async function generateArticle(topic) {
+        try {
+            const response = await fetch("https://steep-block-7d70.indexmod-ce3.workers.dev/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ topic })
+            });
 
-  document.getElementById('downloadMd').onclick = () => {
-    downloadFile(topic + ".md", content);
-  };
+            const data = await response.json();
 
-  document.getElementById('downloadPdf').onclick = () => {
-    generatePdf(topic, content);
-  };
-}
+            if (data.article) return data.article;
+            else return `Ошибка генерации статьи для темы "${topic}"`;
+        } catch (err) {
+            return `Ошибка запроса: ${err.message}`;
+        }
+    }
 
-// Скачивание Markdown
-function downloadFile(filename, text) {
-  const blob = new Blob([text], { type: 'text/markdown' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = filename;
-  link.click();
-}
+    function openArticle(topic) {
+        generateArticle(topic).then(article => {
+            const articleContainer = document.getElementById("article");
+            articleContainer.innerHTML = `
+                <h2>${topic}</h2>
+                <pre>${article}</pre>
+            `;
+            document.getElementById("modal").style.display = "flex";
 
-// Генерация PDF (через jsPDF)
-function generatePdf(title, text) {
-  import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js').then(jsPDF => {
-    const doc = new jsPDF.jsPDF();
-    const lines = doc.splitTextToSize(text, 180);
-    doc.text(title, 10, 10);
-    doc.text(lines, 10, 20);
-    doc.save(title + '.pdf');
-  });
-}
-</script>
+            document.getElementById("save-md").onclick = () => saveMD(topic, article);
+            document.getElementById("save-pdf").onclick = () => savePDF();
+        });
+    }
 
+    function saveMD(topic, text) {
+        const blob = new Blob([text], { type: "text/markdown" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `${topic}.md`;
+        a.click();
+    }
+
+    function savePDF() {
+        const element = document.getElementById("article");
+        if (window.html2pdf) {
+            html2pdf().from(element).save();
+        } else {
+            alert("html2pdf.js не подключен!");
+        }
+    }
+
+    document.getElementById("close-modal").onclick = () =>
+        document.getElementById("modal").style.display = "none";
+
+    loadTopics();
+    </script>
 </body>
 </html>
