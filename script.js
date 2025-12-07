@@ -1,4 +1,31 @@
-// Загружаем список топиков
+// Генерируем slug
+function slugify(text) {
+    return text
+        .toLowerCase()
+        .replace(/ё/g, "e")
+        .replace(/[^\w]+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+}
+
+// Открываем Telegram для создания поста
+function generatePost(topic) {
+    const slug = slugify(topic);
+    const date = new Date().toISOString().slice(0, 10);
+
+    const postText = `# ${topic}\n\n(Пока текст пустой. Заполните вручную.)`;
+
+    // Кодируем текст для URL
+    const encodedText = encodeURIComponent(postText);
+
+    // Ссылка для публикации в телеге (пользователь подтвердит пост)
+    const url = `https://t.me/indexmod?text=${encodedText}`;
+
+    // Открываем в новой вкладке
+    window.open(url, "_blank");
+}
+
+// Загружаем топики
 async function loadTopics() {
     try {
         const response = await fetch("topics.txt");
@@ -14,6 +41,8 @@ async function loadTopics() {
         topics.sort((a, b) => a.localeCompare(b));
 
         const container = document.getElementById("topics");
+        container.innerHTML = ""; // очистим контейнер
+
         let currentLetter = "";
         let columns = [
             document.createElement("div"),
@@ -35,7 +64,7 @@ async function loadTopics() {
             div.className = "topic";
             div.textContent = topic;
 
-            div.onclick = () => generateMD(topic);
+            div.onclick = () => generatePost(topic);
 
             columns[i % 3].appendChild(div);
         });
@@ -45,41 +74,6 @@ async function loadTopics() {
     } catch (err) {
         console.error("Ошибка загрузки топиков:", err);
     }
-}
-
-// Генерируем slug
-function slugify(text) {
-    return text
-        .toLowerCase()
-        .replace(/ё/g, "e")
-        .replace(/[^\w]+/g, "-")
-        .replace(/-+/g, "-")
-        .replace(/^-|-$/g, "");
-}
-
-// Создаём MD-файл локально
-function generateMD(topic) {
-    const slug = slugify(topic);
-    const date = new Date().toISOString().slice(0, 10);
-
-    const md = `---
-title: "${topic}"
-slug: "${slug}"
-created: "${date}"
----
-
-# ${topic}
-
-(Пока текст пустой. Заполните вручную.)
-`;
-
-    const blob = new Blob([md], { type: "text/markdown" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `${slug}.md`;
-    a.click();
-
-    alert(`Файл ${slug}.md сохранён. Переместите его в папку generated/ вашего репозитория и закоммитьте.`);
 }
 
 loadTopics();
