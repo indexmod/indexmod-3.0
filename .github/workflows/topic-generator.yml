@@ -1,37 +1,74 @@
-name: Topic Generator
+name: Generate Topics Articles
 
 on:
-  workflow_dispatch:
-    inputs:
-      topic:
-        description: 'Тема для генерации'
-        required: true
+  push:
+    paths:
+      - 'topics.txt'
+  workflow_dispatch: # можно запускать вручную
 
 jobs:
   generate:
     runs-on: ubuntu-latest
-    env:
-      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
 
-      - name: Install dependencies
-        run: npm install node-fetch@3
+    - name: Install dependencies
+      run: npm install node-fetch@3
 
-      - name: Generate topic Markdown
-        run: |
-          node scripts/generate-topic.js "${{ github.event.inputs.topic }}"
+    - name: Create generated folder
+      run: mkdir -p generated
 
-      - name: Commit generated file
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add generated/*.md
-          git commit -m "Generated ${{ github.event.inputs.topic }}" || echo "No changes"
-          git push
+    - name: Generate MD articles
+      env:
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      run: |
+        node -e "
+        import fs from 'fs';
+        import fetch from 'node-fetch';
+
+        const topics = fs.readFileSync('topics.txt', 'utf-8')
+          .split('\n')
+          .map(t => t.trim())
+          .filter(t => t.length > 0);
+
+        const generate = async (topic) => {
+          const prompt = \`
+          Ты — эксперт Википедии. Напиши структурированную статью о **\${topic}** в Markdown.
+          Язык — русский, формат — ## Заголовки и списки, без вымышленных данных.
+          \`;
+          const res = await fetch('https://api-inference.huggingface.co/models/Qwen/Qwen2.5-7B-Instruct', {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + process.env.HF_TOKEN,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ inputs: prompt, parameters: { max_new_tokens: 1500, temperature: 0.3 } })
+          });
+          const data = await res.json();
+          const text = Array.isArray(data) && data[0]?.generated_text ? data[0].generated_text : data.generated_text || 'Ошибка генерации';
+          const slug = topic.toLowerCase().replace(/\\s+/g,'-').replace(/[^a-zа-я0-9\\-]/gi,'');
+          fs.writeFileSync('generated/' + slug + '.md', text);
+          console.log('Generated:', topic);
+        };
+
+        (async () => {
+          for (const topic of topics) {
+            await generate(topic);
+          }
+        })();
+        "
+
+    - name: Commit generated files
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add generated/
+        git commit -m "Update generated MD articles" || echo "No changes to commit"
+        git push
