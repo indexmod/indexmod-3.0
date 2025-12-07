@@ -3,20 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <title>Indexmod Fashion & Art 2026</title>
+
+  <!-- Фавикон -->
   <link rel="icon" type="image/png" href="logo.png">
+
+  <!-- Стили -->
   <link rel="stylesheet" href="styles.css">
+
+  <!-- Подключение html2pdf для сохранения PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
   <div class="container">
+
+    <!-- Верхняя панель с логотипом и заголовком -->
     <header style="margin-bottom: 20px; display: flex; flex-direction: column; align-items: flex-start;">
       <img src="logo.png" alt="Logo" style="height: 60px; width: auto; margin-bottom: 10px;">
       <h1 style="margin: 0;">Indexmod Fashion & Art 2026</h1>
     </header>
 
+    <!-- Контейнер для топиков -->
     <div id="topics" class="columns-container"></div>
   </div>
 
-  <!-- Модалка -->
+  <!-- Модалка для статьи -->
   <div id="modal">
     <div id="modal-content">
       <button id="close-modal">Закрыть</button>
@@ -26,7 +36,6 @@
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script>
     async function loadTopics() {
       const response = await fetch("topics.txt");
@@ -52,18 +61,52 @@
         const div = document.createElement("div");
         div.className = "topic";
         div.textContent = topic;
-
-        // Перенаправление на статический MD-файл
-        div.onclick = () => {
-          const slug = topic.toLowerCase().replace(/\s+/g,'-').replace(/[^a-zа-я0-9\-]/gi,'');
-          const url = `generated/${slug}.md`;
-          window.open(url, "_blank");
-        };
-
+        div.onclick = () => openArticle(topic);
         columns[i % 3].appendChild(div);
       });
 
       columns.forEach(c => container.appendChild(c));
+    }
+
+    async function fetchArticle(topic) {
+      const slug = topic.toLowerCase().replace(/\s+/g, '-');
+      const url = `https://<username>.github.io/indexmod-3.0/generated/${slug}.md`;
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Файл не найден");
+        const md = await response.text();
+        return md;
+      } catch (err) {
+        return `Ошибка: не удалось загрузить статью для "${topic}"`;
+      }
+    }
+
+    function openArticle(topic) {
+      fetchArticle(topic).then(article => {
+        document.getElementById("article").innerHTML = `<h2>${topic}</h2><pre>${article}</pre>`;
+        document.getElementById("modal").style.display = "flex";
+
+        document.getElementById("save-md").onclick = () => saveMD(topic, article);
+        document.getElementById("save-pdf").onclick = () => savePDF();
+      });
+    }
+
+    function saveMD(topic, text) {
+      const blob = new Blob([text], { type: "text/markdown" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${topic}.md`;
+      a.click();
+    }
+
+    function savePDF() {
+      const element = document.getElementById("article");
+      if (window.html2pdf) {
+        html2pdf().from(element).save();
+      } else {
+        window.print();
+      }
     }
 
     document.getElementById("close-modal").onclick = () => {

@@ -1,52 +1,37 @@
-name: Generate Topics
+name: Generate Topics Articles
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   generate:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout main branch
+      - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # нужно для пуша в другую ветку
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install dependencies
-        run: npm install
-
-      - name: Read topics
-        id: read_topics
-        run: |
-          mkdir -p generated
-          topics=$(cat topics.txt)
-          echo "TOPICS<<EOF" >> $GITHUB_ENV
-          echo "$topics" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+        run: npm install node-fetch@3
 
       - name: Generate articles
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          echo "$TOPICS" | while read topic; do
-            [ -z "$topic" ] && continue
-            echo "Generating $topic"
-            slug=$(echo "$topic" | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')
-            curl -s -X POST "https://router.huggingface.co/models/Qwen/Qwen2.5-7B-Instruct" \
-              -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}" \
-              -H "Content-Type: application/json" \
-              -d "{\"inputs\": \"Write a Markdown article about '$topic' in Russian\"}" \
-              -o "generated/$slug.md"
-          done
+          node .github/workflows/generate.js
 
-      - name: Commit and push to gh-pages
+      - name: Commit and push generated files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add generated/
-          git commit -m "Auto-generate articles"
-          git push origin HEAD:gh-pages --force
+          git commit -m "Update generated articles [skip ci]" || echo "No changes to commit"
+          git push
