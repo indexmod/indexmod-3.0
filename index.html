@@ -6,6 +6,7 @@
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
   <div class="container">
     <header style="margin-bottom: 20px; display: flex; flex-direction: column; align-items: flex-start;">
@@ -13,64 +14,10 @@
       <h1 style="margin: 0;">Indexmod Fashion & Art 2026</h1>
     </header>
 
+    <!-- Контейнер для топиков -->
     <div id="topics" class="columns-container"></div>
   </div>
 
-  <!-- Модалка -->
-  <div id="modal">
-    <div id="modal-content">
-      <button id="close-modal">Закрыть</button>
-      <div id="article"></div>
-      <button id="save-md">Скачать MD</button>
-      <button id="save-pdf">Скачать PDF</button>
-    </div>
-  </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script>
-    async function loadTopics() {
-      const response = await fetch("topics.txt");
-      const text = await response.text();
-      let topics = text.split("\n").map(t => t.trim()).filter(t => t.length > 0);
-      topics.sort((a,b) => a.localeCompare(b));
-
-      const container = document.getElementById("topics");
-      let currentLetter = "";
-
-      let columns = [document.createElement("div"), document.createElement("div"), document.createElement("div")];
-      columns.forEach(c => c.className = "column");
-
-      topics.forEach((topic, i) => {
-        const first = topic[0].toUpperCase();
-        if (first !== currentLetter) {
-          currentLetter = first;
-          const h = document.createElement("h2");
-          h.textContent = currentLetter;
-          columns[i % 3].appendChild(h);
-        }
-
-        const div = document.createElement("div");
-        div.className = "topic";
-        div.textContent = topic;
-
-        // Перенаправление на статический MD-файл
-        div.onclick = () => {
-          const slug = topic.toLowerCase().replace(/\s+/g,'-').replace(/[^a-zа-я0-9\-]/gi,'');
-          const url = `generated/${slug}.md`;
-          window.open(url, "_blank");
-        };
-
-        columns[i % 3].appendChild(div);
-      });
-
-      columns.forEach(c => container.appendChild(c));
-    }
-
-    document.getElementById("close-modal").onclick = () => {
-      document.getElementById("modal").style.display = "none";
-    };
-
-    loadTopics();
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
