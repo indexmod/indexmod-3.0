@@ -1,7 +1,12 @@
+/* ------------------------------ */
 /* Подключение шрифта */
+/* ------------------------------ */
 @import url('https://fonts.googleapis.com/css?family=Old+Standard+TT');
 
+
+/* ------------------------------ */
 /* Сброс стилей */
+/* ------------------------------ */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -19,17 +24,22 @@ body {
   color: #333;
   background-color: #fff;
   margin: 40px;
-  padding: 0;
 }
 
+
+/* ------------------------------ */
 /* Контейнер */
+/* ------------------------------ */
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
 }
 
+
+/* ------------------------------ */
 /* Заголовки */
+/* ------------------------------ */
 h1 {
   font-size: 3rem;
   font-weight: bold;
@@ -40,29 +50,54 @@ h1 {
 h2 {
   font-size: 2rem;
   font-weight: bold;
-  margin: 20px 0 10px 0;
+  margin: 20px 0 10px;
   color: #000;
 }
 
-/* Топики */
+
+/* ------------------------------ */
+/* Блок топиков – в 3 колонки */
+/* ------------------------------ */
+.topics {
+  column-count: 3;
+  column-gap: 2rem;
+}
+
+/* Группа по букве */
+.topic-group {
+  break-inside: avoid;
+  margin-bottom: 1.5rem;
+}
+
+/* Заголовок для буквы */
+.topic-group > h2 {
+  font-size: 1.6rem;
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.2rem;
+}
+
+/* Буквица — только у первого элемента группы */
+.topic-group li:first-child::first-letter {
+  font-size: 2.4rem;
+  font-weight: bold;
+  float: left;
+  line-height: 1;
+  padding-right: 6px;
+  padding-top: 2px;
+}
+
+/* Элемент списка */
 .topic {
   cursor: pointer;
   padding: 5px 0;
 }
 
-/* Контейнер колонок */
-.columns-container {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-}
 
-.column {
-  flex: 0 1 auto;
-  padding: 0 5px;
-}
-
-/* Модалка */
+/* ------------------------------ */
+/* Модальное окно */
+/* ------------------------------ */
 #modal {
   display: none;
   position: fixed;
@@ -95,18 +130,18 @@ button {
   cursor: pointer;
 }
 
+
+/* ------------------------------ */
 /* Адаптивность */
+/* ------------------------------ */
 @media (max-width: 1024px) {
-  .columns-container {
-    flex-wrap: wrap;
-  }
-  .column {
-    flex: 1 1 calc(50% - 20px);
+  .topics {
+    column-count: 2;
   }
 }
 
 @media (max-width: 768px) {
-  .column {
-    flex: 1 1 100%;
+  .topics {
+    column-count: 1;
   }
 }
