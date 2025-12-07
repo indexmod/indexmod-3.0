@@ -26,7 +26,7 @@ body {
 }
 
 /* ------------------------------ */
-/* Контейнер */
+/* Контейнер и заголовки */
 /* ------------------------------ */
 .container {
   max-width: 1200px;
@@ -47,9 +47,6 @@ body {
   margin-bottom: 10px;
 }
 
-/* ------------------------------ */
-/* Заголовки */
-/* ------------------------------ */
 h1 {
   font-size: 3rem;
   font-weight: bold;
@@ -86,10 +83,15 @@ h2 {
 .topic {
   cursor: pointer;
   padding: 5px 0;
+  transition: color 0.2s;
+}
+
+.topic:hover {
+  color: #0077ff;
 }
 
 /* Буквица у первого элемента группы */
-.topic-group li:first-child::first-letter {
+.topic-group .topic:first-child::first-letter {
   font-size: 2.4rem;
   font-weight: bold;
   float: left;
@@ -103,7 +105,6 @@ h2 {
 /* ------------------------------ */
 @media (max-width: 1024px) {
   .topics {
-    flex-direction: row;
     flex-wrap: wrap;
   }
   .column {

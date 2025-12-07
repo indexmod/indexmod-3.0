@@ -26,7 +26,7 @@ async function loadTopics() {
         }
 
         const text = await response.text();
-        let topics = text.split("\n").map(t => t.trim()).filter(Boolean);
+        const topics = text.split("\n").map(t => t.trim()).filter(Boolean);
         topics.sort((a, b) => a.localeCompare(b));
 
         const container = document.getElementById("topics");
@@ -61,7 +61,7 @@ async function loadTopics() {
                 // Добавляем группу в колонку
                 columns[colIndex % 3].appendChild(group);
 
-                colIndex++; // переходим к следующей колонке для новой буквы
+                colIndex++;
             }
 
             // Находим последнюю группу в текущей колонке
