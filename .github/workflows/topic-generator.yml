@@ -26,7 +26,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          node .github/workflows/generate.js
+          node generate.js
 
       - name: Commit and push generated files
         run: |
