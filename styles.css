@@ -34,6 +34,19 @@ body {
   padding: 20px;
 }
 
+.header {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.logo {
+  height: 60px;
+  width: auto;
+  margin-bottom: 10px;
+}
+
 /* ------------------------------ */
 /* Заголовки */
 /* ------------------------------ */
@@ -41,43 +54,41 @@ h1 {
   font-size: 3rem;
   font-weight: bold;
   margin-bottom: 1.5rem;
-  color: #000;
 }
 
 h2 {
-  font-size: 2rem;
-  font-weight: bold;
-  margin: 20px 0 10px;
-  color: #000;
-}
-
-/* ------------------------------ */
-/* Блок топиков – в 3 колонки */
-/* ------------------------------ */
-.topics {
-  column-count: 3;
-  column-gap: 2rem;
-  /* Чтобы секции не разрывались */
-  widows: 1;
-  orphans: 1;
-}
-
-/* Группа по букве */
-.topic-group {
-  break-inside: avoid-column; /* Главное изменение */
-  margin-bottom: 1.5rem;
-}
-
-/* Заголовок для буквы */
-.topic-group > h2 {
   font-size: 1.6rem;
-  margin: 0 0 0.5rem;
   font-weight: 700;
+  margin: 0 0 0.5rem;
   border-bottom: 1px solid #eee;
   padding-bottom: 0.2rem;
 }
 
-/* Буквица — только у первого элемента группы */
+/* ------------------------------ */
+/* Блок топиков в колонки */
+/* ------------------------------ */
+.topics {
+  display: flex;
+  justify-content: space-between;
+}
+
+.column {
+  width: 32%;
+}
+
+/* Секция по букве */
+.topic-group {
+  break-inside: avoid;
+  margin-bottom: 1.5rem;
+}
+
+/* Топик */
+.topic {
+  cursor: pointer;
+  padding: 5px 0;
+}
+
+/* Буквица у первого элемента группы */
 .topic-group li:first-child::first-letter {
   font-size: 2.4rem;
   font-weight: bold;
@@ -87,58 +98,22 @@ h2 {
   padding-top: 2px;
 }
 
-/* Элемент списка */
-.topic {
-  cursor: pointer;
-  padding: 5px 0;
-}
-
-/* ------------------------------ */
-/* Модальное окно */
-/* ------------------------------ */
-#modal {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.7);
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-#modal-content {
-  background: #fff;
-  padding: 20px;
-  max-width: 90%;
-  max-height: 90%;
-  overflow: auto;
-  position: relative;
-}
-
-#close-modal {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-}
-
-button {
-  margin-top: 10px;
-  padding: 5px 10px;
-  cursor: pointer;
-}
-
 /* ------------------------------ */
 /* Адаптивность */
 /* ------------------------------ */
 @media (max-width: 1024px) {
   .topics {
-    column-count: 2;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .column {
+    width: 48%;
+    margin-bottom: 20px;
   }
 }
 
 @media (max-width: 768px) {
-  .topics {
-    column-count: 1;
+  .column {
+    width: 100%;
   }
 }
