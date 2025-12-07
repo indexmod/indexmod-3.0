@@ -1,4 +1,4 @@
-// Генерируем slug (опционально, можно оставить для своих целей)
+// Генерируем slug (для внутреннего использования)
 function slugify(text) {
     return text
         .toLowerCase()
@@ -11,14 +11,8 @@ function slugify(text) {
 // Открываем Telegram для создания поста
 function generatePost(topic) {
     const postText = `# ${topic}\n\n(Пока текст пустой. Заполните вручную.)`;
-
-    // Кодируем текст для URL
     const encodedText = encodeURIComponent(postText);
-
-    // Ссылка на канал с текстом
     const url = `https://t.me/indexmod?text=${encodedText}`;
-
-    // Открываем в новой вкладке
     window.open(url, "_blank");
 }
 
@@ -38,9 +32,55 @@ async function loadTopics() {
         const container = document.getElementById("topics");
         container.innerHTML = "";
 
-        const columns = [
-            document.createElement("div"),
-            document.createElement("div"),
-            document.createElement("div")
-        ];
-        columns.forEach(col
+        // Создаём 3 колонки
+        const columns = [];
+        for (let i = 0; i < 3; i++) {
+            const col = document.createElement("div");
+            col.className = "column";
+            columns.push(col);
+            container.appendChild(col);
+        }
+
+        let currentLetter = "";
+        let colIndex = 0;
+
+        topics.forEach((topic) => {
+            const firstLetter = topic[0].toUpperCase();
+
+            // Если новая буква — создаём секцию
+            if (firstLetter !== currentLetter) {
+                currentLetter = firstLetter;
+
+                const group = document.createElement("div");
+                group.className = "topic-group";
+
+                const h2 = document.createElement("h2");
+                h2.textContent = currentLetter;
+                group.appendChild(h2);
+
+                // Добавляем группу в колонку
+                columns[colIndex % 3].appendChild(group);
+
+                colIndex++; // переходим к следующей колонке для новой буквы
+            }
+
+            // Находим последнюю группу в текущей колонке
+            const currentColumn = columns[(colIndex - 1) % 3];
+            const lastGroup = currentColumn.lastElementChild;
+
+            // Создаём топик
+            const div = document.createElement("div");
+            div.className = "topic";
+            div.textContent = topic;
+            div.onclick = () => generatePost(topic);
+
+            // Добавляем в последнюю группу
+            lastGroup.appendChild(div);
+        });
+
+    } catch (err) {
+        console.error("Ошибка загрузки топиков:", err);
+    }
+}
+
+loadTopics();
