@@ -1,62 +1,71 @@
-// Загружаем топики и генерируем страницу
+// Открываем Telegram с готовым постом
+function openTelegramPost(topic) {
+    const postText = `# ${topic}\n\n(Пока текст пустой. Заполните вручную.)`;
+    const encodedText = encodeURIComponent(postText);
+    const url = `https://t.me/indexmod?text=${encodedText}`;
+    window.open(url, "_blank");
+}
+
+// Загружаем топики и создаём страницы
 async function loadTopics() {
+    const container = document.getElementById("topics");
+    container.innerHTML = "";
+
     try {
         const response = await fetch("topics.txt");
         if (!response.ok) {
-            console.error("Не удалось загрузить topics.txt");
+            container.textContent = "Не удалось загрузить topics.txt";
             return;
         }
 
         const text = await response.text();
         const topics = text.split("\n").map(t => t.trim()).filter(Boolean);
-        topics.sort((a, b) => a.localeCompare(b));
+        topics.sort((a, b) => a.localeCompare(b, 'ru'));
 
-        const container = document.getElementById("topics");
-        container.innerHTML = "";
-
-        // Создаём 3 колонки
+        // Создаём три колонки
         const columns = [];
         for (let i = 0; i < 3; i++) {
             const col = document.createElement("div");
             col.className = "column";
-            columns.push(col);
             container.appendChild(col);
+            columns.push(col);
         }
 
-        let currentLetter = "";
+        // Группируем по первой букве
+        const groups = {};
+        topics.forEach(topic => {
+            const letter = topic[0].toUpperCase();
+            if (!groups[letter]) groups[letter] = [];
+            groups[letter].push(topic);
+        });
+
+        const letters = Object.keys(groups).sort();
         let colIndex = 0;
 
-        topics.forEach((topic) => {
-            const firstLetter = topic[0].toUpperCase();
+        letters.forEach(letter => {
+            const groupDiv = document.createElement("div");
+            groupDiv.className = "topic-group";
 
-            // Если новая буква — создаём группу
-            if (firstLetter !== currentLetter) {
-                currentLetter = firstLetter;
+            const h2 = document.createElement("h2");
+            h2.textContent = letter;
+            groupDiv.appendChild(h2);
 
-                const group = document.createElement("div");
-                group.className = "topic-group";
+            groups[letter].forEach(topic => {
+                const div = document.createElement("div");
+                div.className = "topic";
+                div.textContent = topic;
+                div.onclick = () => openTelegramPost(topic);
+                groupDiv.appendChild(div);
+            });
 
-                const h2 = document.createElement("h2");
-                h2.textContent = currentLetter;
-                group.appendChild(h2);
-
-                columns[colIndex % 3].appendChild(group);
-                colIndex++;
-            }
-
-            // Добавляем топик в последнюю группу колонки
-            const currentColumn = columns[(colIndex - 1) % 3];
-            const lastGroup = currentColumn.lastElementChild;
-
-            const div = document.createElement("div");
-            div.className = "topic";
-            div.textContent = topic;
-
-            lastGroup.appendChild(div);
+            // Добавляем группу в колонку
+            columns[colIndex % 3].appendChild(groupDiv);
+            colIndex++;
         });
 
     } catch (err) {
-        console.error("Ошибка загрузки топиков:", err);
+        console.error(err);
+        container.textContent = "Ошибка при загрузке топиков.";
     }
 }
 
