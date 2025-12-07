@@ -1,22 +1,4 @@
-// Генерируем slug (для внутреннего использования)
-function slugify(text) {
-    return text
-        .toLowerCase()
-        .replace(/ё/g, "e")
-        .replace(/[^\w]+/g, "-")
-        .replace(/-+/g, "-")
-        .replace(/^-|-$/g, "");
-}
-
-// Открываем Telegram для создания поста
-function generatePost(topic) {
-    const postText = `# ${topic}\n\n(Пока текст пустой. Заполните вручную.)`;
-    const encodedText = encodeURIComponent(postText);
-    const url = `https://t.me/indexmod?text=${encodedText}`;
-    window.open(url, "_blank");
-}
-
-// Загружаем топики
+// Загружаем топики и генерируем страницу
 async function loadTopics() {
     try {
         const response = await fetch("topics.txt");
@@ -47,7 +29,7 @@ async function loadTopics() {
         topics.forEach((topic) => {
             const firstLetter = topic[0].toUpperCase();
 
-            // Если новая буква — создаём секцию
+            // Если новая буква — создаём группу
             if (firstLetter !== currentLetter) {
                 currentLetter = firstLetter;
 
@@ -58,23 +40,18 @@ async function loadTopics() {
                 h2.textContent = currentLetter;
                 group.appendChild(h2);
 
-                // Добавляем группу в колонку
                 columns[colIndex % 3].appendChild(group);
-
                 colIndex++;
             }
 
-            // Находим последнюю группу в текущей колонке
+            // Добавляем топик в последнюю группу колонки
             const currentColumn = columns[(colIndex - 1) % 3];
             const lastGroup = currentColumn.lastElementChild;
 
-            // Создаём топик
             const div = document.createElement("div");
             div.className = "topic";
             div.textContent = topic;
-            div.onclick = () => generatePost(topic);
 
-            // Добавляем в последнюю группу
             lastGroup.appendChild(div);
         });
 
