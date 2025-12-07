@@ -1,4 +1,4 @@
-// Генерируем slug
+// Генерируем slug (опционально, можно оставить для своих целей)
 function slugify(text) {
     return text
         .toLowerCase()
@@ -11,8 +11,14 @@ function slugify(text) {
 // Открываем Telegram для создания поста
 function generatePost(topic) {
     const postText = `# ${topic}\n\n(Пока текст пустой. Заполните вручную.)`;
+
+    // Кодируем текст для URL
     const encodedText = encodeURIComponent(postText);
+
+    // Ссылка на канал с текстом
     const url = `https://t.me/indexmod?text=${encodedText}`;
+
+    // Открываем в новой вкладке
     window.open(url, "_blank");
 }
 
@@ -37,41 +43,4 @@ async function loadTopics() {
             document.createElement("div"),
             document.createElement("div")
         ];
-        columns.forEach(col => col.className = "column");
-
-        let currentLetter = "";
-
-        topics.forEach((topic, i) => {
-            let first = topic[0].toUpperCase();
-
-            if (first !== currentLetter) {
-                currentLetter = first;
-                const h2 = document.createElement("h2");
-                h2.textContent = currentLetter;
-
-                // создаём секцию для буквы
-                const group = document.createElement("div");
-                group.className = "topic-group";
-                group.appendChild(h2);
-
-                columns[i % 3].appendChild(group);
-            }
-
-            const div = document.createElement("div");
-            div.className = "topic";
-            div.textContent = topic;
-            div.onclick = () => generatePost(topic);
-
-            // добавляем в последнюю секцию буквы
-            const lastGroup = columns[i % 3].lastElementChild;
-            lastGroup.appendChild(div);
-        });
-
-        columns.forEach(c => container.appendChild(c));
-
-    } catch (err) {
-        console.error("Ошибка загрузки топиков:", err);
-    }
-}
-
-loadTopics();
+        columns.forEach(col
