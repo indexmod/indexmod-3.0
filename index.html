@@ -3,30 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <title>Indexmod Fashion & Art 2026</title>
-
-  <!-- Фавикон -->
   <link rel="icon" type="image/png" href="logo.png">
-
-  <!-- Стили -->
   <link rel="stylesheet" href="styles.css">
-
-  <!-- Подключение html2pdf для сохранения PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
   <div class="container">
-
-    <!-- Верхняя панель с логотипом и заголовком -->
     <header style="margin-bottom: 20px; display: flex; flex-direction: column; align-items: flex-start;">
       <img src="logo.png" alt="Logo" style="height: 60px; width: auto; margin-bottom: 10px;">
       <h1 style="margin: 0;">Indexmod Fashion & Art 2026</h1>
     </header>
 
-    <!-- Контейнер для топиков -->
     <div id="topics" class="columns-container"></div>
   </div>
 
-  <!-- Модалка для статьи -->
+  <!-- Модалка -->
   <div id="modal">
     <div id="modal-content">
       <button id="close-modal">Закрыть</button>
@@ -36,7 +26,7 @@
     </div>
   </div>
 
-  <!-- Скрипт -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script>
     async function loadTopics() {
       const response = await fetch("topics.txt");
@@ -47,13 +37,11 @@
       const container = document.getElementById("topics");
       let currentLetter = "";
 
-      // Создаем три колонки
       let columns = [document.createElement("div"), document.createElement("div"), document.createElement("div")];
       columns.forEach(c => c.className = "column");
 
       topics.forEach((topic, i) => {
         const first = topic[0].toUpperCase();
-        // Если первая буква отличается, добавляем буквицы в соответствующую колонку
         if (first !== currentLetter) {
           currentLetter = first;
           const h = document.createElement("h2");
@@ -64,52 +52,18 @@
         const div = document.createElement("div");
         div.className = "topic";
         div.textContent = topic;
-        div.onclick = () => openArticle(topic);
+
+        // Перенаправление на статический MD-файл
+        div.onclick = () => {
+          const slug = topic.toLowerCase().replace(/\s+/g,'-').replace(/[^a-zа-я0-9\-]/gi,'');
+          const url = `generated/${slug}.md`;
+          window.open(url, "_blank");
+        };
+
         columns[i % 3].appendChild(div);
       });
 
       columns.forEach(c => container.appendChild(c));
-    }
-
-    async function generateArticle(topic) {
-      try {
-        const response = await fetch("https://steep-block-7d70.indexmod-ce3.workers.dev/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ topic })
-        });
-        const data = await response.json();
-        return data.article || `Ошибка генерации статьи для темы "${topic}"`;
-      } catch (err) {
-        return `Ошибка запроса: ${err.message}`;
-      }
-    }
-
-    function openArticle(topic) {
-      generateArticle(topic).then(article => {
-        document.getElementById("article").innerHTML = `<h2>${topic}</h2><pre>${article}</pre>`;
-        document.getElementById("modal").style.display = "flex";
-
-        document.getElementById("save-md").onclick = () => saveMD(topic, article);
-        document.getElementById("save-pdf").onclick = () => savePDF();
-      });
-    }
-
-    function saveMD(topic, text) {
-      const blob = new Blob([text], { type: "text/markdown" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${topic}.md`;
-      a.click();
-    }
-
-    function savePDF() {
-      const element = document.getElementById("article");
-      if (window.html2pdf) {
-        html2pdf().from(element).save();
-      } else {
-        window.print();
-      }
     }
 
     document.getElementById("close-modal").onclick = () => {
