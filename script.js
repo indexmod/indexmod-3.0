@@ -58,17 +58,14 @@ created: "${date}"
 (Пока текст пустой. Заполните вручную.)
 `;
 
-    // Локальное сохранение
+    // Локальное сохранение .md файла
     const blob = new Blob([md], { type: "text/markdown" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `${slug}.md`;
     a.click();
 
-    // После сохранения предлагаем открыть ссылку
-    setTimeout(() => {
-        window.open(`generated/${slug}.md`, "_blank");
-    }, 200);
+    alert("Файл сохранён. Переместите его в папку generated/ вашего репозитория и закоммитьте.");
 }
 
 loadTopics();
